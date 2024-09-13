@@ -1,11 +1,10 @@
-# by huowuzhao
 import os
 import sys
-import re
 import signal
 import subprocess
 import tempfile
 import shutil
+import json  # 引入json模块用于JSON格式输出
 from datetime import datetime
 import textract  # 引入textract包用于处理各种文档类型
 
@@ -22,6 +21,9 @@ ignore_list = set()
 file_extensions_to_exclude = set()
 processing_docx = False
 processing_xlsx = False
+results = []  # 用于存储结果的全局列表
+json_output_enabled = False  # JSON 输出的开关
+current_parent_path = ""  # 保存压缩文件的路径
 
 # 文件类型枚举
 class FileType:
@@ -63,37 +65,42 @@ def luhn_check(card_number):
 
     return checksum % 10 == 0
 
-def detect_credit_card_numbers(data, line_number=None):
-    # 使用正则表达式检测潜在的信用卡号，并返回信用卡类型和行号
-    potential_cards = re.findall(r'\b\d{13,16}\b', data)
-    valid_cards = []
+def find_potential_credit_card_numbers(text, line_number=None):
+    # 手动检测潜在的信用卡号（不使用正则表达式）
+    potential_cards = []
+    current_number = ""
+    
+    for char in text:
+        if char.isdigit():
+            current_number += char
+        else:
+            if 13 <= len(current_number) <= 16 and luhn_check(current_number):
+                potential_cards.append((current_number, line_number))
+            current_number = ""
 
-    for card in potential_cards:
-        card_type = get_card_type(card)
-        if card_type:
-            valid_cards.append((card, card_type, line_number))
+    # 最后一个可能的卡号检查
+    if 13 <= len(current_number) <= 16 and luhn_check(current_number):
+        potential_cards.append((current_number, line_number))
 
-    return valid_cards
+    return potential_cards
 
 # 信用卡类型检测函数
 def get_card_type(card_number):
     """检测信用卡类型"""
-    if luhn_check(card_number):
-        if is_visa(card_number):
-            return 'VISA'
-        elif is_mastercard(card_number):
-            return 'MasterCard'
-        elif is_amex(card_number):
-            return 'American Express'
-        elif is_discover(card_number):
-            return 'Discover'
-        elif is_jcb(card_number):
-            return 'JCB'
-        elif is_diners_club(card_number):
-            return 'Diners Club'
-        else:
-            return 'Unknown'
-    return None
+    if is_visa(card_number):
+        return 'VISA'
+    elif is_mastercard(card_number):
+        return 'MasterCard'
+    elif is_amex(card_number):
+        return 'American Express'
+    elif is_discover(card_number):
+        return 'Discover'
+    elif is_jcb(card_number):
+        return 'JCB'
+    elif is_diners_club(card_number):
+        return 'Diners Club'
+    else:
+        return 'Unknown'
 
 def is_visa(card_number):
     """检测Visa卡"""
@@ -204,7 +211,7 @@ def process_directory(path):
 
 # 文件扫描
 def process_file(filename):
-    global logfilefd
+    global logfilefd, current_parent_path
     filetype = detect_file_type(filename)
 
     if filetype in (FileType.EXECUTABLE, FileType.IMAGE, FileType.VIDEO, FileType.AUDIO):
@@ -224,18 +231,27 @@ def process_file(filename):
 
 # 使用textract解析文件
 def parse_with_textract(filename):
-    global total_count
+    global total_count, results, current_parent_path
     try:
         text = textract.process(filename).decode('utf-8')
         lines = text.splitlines()
         detected_cards = []
 
         for i, line in enumerate(lines, start=1):
-            detected_cards.extend(detect_credit_card_numbers(line, line_number=i))
+            detected_cards.extend(find_potential_credit_card_numbers(line, line_number=i))
 
-        for card, card_type, line_number in detected_cards:
+        for card, line_number in detected_cards:
+            card_type = get_card_type(card)
             if card not in ignore_list:
-                print(f"Detected {card_type} card in {filename} at line {line_number}: {card}")
+                # 使用组合路径
+                output_path = os.path.join(current_parent_path, os.path.basename(filename)) if current_parent_path else filename
+                print(f"Detected {card_type} card in {output_path} at line {line_number}: {card}")
+                results.append({
+                    "filename": output_path,
+                    "line_number": line_number,
+                    "card_number": card,
+                    "card_type": card_type
+                })
                 total_count += 1
         return len(detected_cards)
     except Exception as e:
@@ -249,16 +265,25 @@ def is_allowed_file_type(name):
 
 # 文件内容扫描
 def search_file_content(filename):
-    global ignore_list, total_count
+    global ignore_list, total_count, results, current_parent_path
     try:
         with open(filename, 'r', errors='ignore') as f:
             detected_cards = []
             for line_number, line in enumerate(f, start=1):
-                detected_cards.extend(detect_credit_card_numbers(line, line_number=line_number))
+                detected_cards.extend(find_potential_credit_card_numbers(line, line_number=line_number))
 
-            for card, card_type, line_number in detected_cards:
+            for card, line_number in detected_cards:
+                card_type = get_card_type(card)
                 if card not in ignore_list:
-                    print(f"Detected {card_type} card in {filename} at line {line_number}: {card}")
+                    # 使用组合路径
+                    output_path = os.path.join(current_parent_path, os.path.basename(filename)) if current_parent_path else filename
+                    print(f"Detected {card_type} card in {output_path} at line {line_number}: {card}")
+                    results.append({
+                        "filename": output_path,
+                        "line_number": line_number,
+                        "card_number": card,
+                        "card_type": card_type
+                    })
                     total_count += 1
         return len(detected_cards)
     except Exception as e:
@@ -267,36 +292,55 @@ def search_file_content(filename):
 
 # 解压ZIP文件
 def unzip_and_parse(filename):
+    global current_parent_path
     temp_dir = tempfile.mkdtemp()
     try:
+        # 保存当前压缩文件的路径
+        original_parent_path = current_parent_path
+        current_parent_path = filename  # 更新当前父路径
+
         subprocess.run(['unzip', '-o', '-d', temp_dir, filename], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         process_directory(temp_dir)
     finally:
         shutil.rmtree(temp_dir)
+        current_parent_path = original_parent_path  # 恢复父路径
     return 0
 
 # 解压GZIP文件
 def gunzip_and_parse(filename):
+    global current_parent_path
     temp_file = tempfile.mkstemp()[1]
     try:
+        # 保存当前压缩文件的路径
+        original_parent_path = current_parent_path
+        current_parent_path = filename  # 更新当前父路径
+
         with open(temp_file, 'wb') as f_out:
             subprocess.run(['gzip', '-d', '-c', filename], stdout=f_out)
         return search_file_content(temp_file)
     finally:
         os.remove(temp_file)
+        current_parent_path = original_parent_path  # 恢复父路径
 
 # 解压TAR文件
 def untar_and_parse(filename):
+    global current_parent_path
     temp_dir = tempfile.mkdtemp()
     try:
+        # 保存当前压缩文件的路径
+        original_parent_path = current_parent_path
+        current_parent_path = filename  # 更新当前父路径
+
         subprocess.run(['tar', '-xvf', filename, '-C', temp_dir], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         process_directory(temp_dir)
     finally:
         shutil.rmtree(temp_dir)
+        current_parent_path = original_parent_path  # 恢复父路径
     return 0
 
 # 清理和退出
 def cleanup():
+    global results
     if logfilefd:
         logfilefd.close()
     print(f"\nTotal files processed: {total_count}")
@@ -304,9 +348,15 @@ def cleanup():
     print(f"Archives extracted: {extracted_archive_count}")
     print(f"Skipped executables: {skipped_executable_count}")
 
+    # 如果启用JSON输出，将结果写入文件
+    if json_output_enabled:
+        with open('result_json.json', 'w') as json_file:
+            json.dump(results, json_file, indent=4)
+        print("\nResults have been written to result_json.json.")
+
 # 主函数
 def main():
-    global logfilename, logfilefd, ignore_list, file_extensions_to_exclude
+    global logfilename, logfilefd, ignore_list, file_extensions_to_exclude, json_output_enabled
 
     if len(sys.argv) < 2:
         print("Usage: python ccsrch.py <options> <start_path>")
@@ -319,7 +369,9 @@ def main():
 
     # 读取忽略列表（如果提供）
     for i, arg in enumerate(sys.argv):
-        if arg == '-i' and i + 1 < len(sys.argv):
+        if arg == '--json-output':
+            json_output_enabled = True
+        elif arg == '-i' and i + 1 < len(sys.argv):
             ignore_list = read_ignore_list(sys.argv[i + 1])
         elif arg == '-n' and i + 1 < len(sys.argv):
             file_extensions_to_exclude = set(sys.argv[i + 1].split(','))
