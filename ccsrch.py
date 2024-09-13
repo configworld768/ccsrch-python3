@@ -1,4 +1,3 @@
-# by huowuzhao
 import os
 import sys
 import signal
@@ -67,21 +66,34 @@ def luhn_check(card_number):
     return checksum % 10 == 0
 
 def find_potential_credit_card_numbers(text, line_number=None):
-    # 手动检测潜在的信用卡号（不使用正则表达式）
-    potential_cards = []
-    current_number = ""
-    
-    for char in text:
+    # 去除非数字字符，保持原始位置索引
+    cleaned_text = ""
+    original_indices = []
+
+    for i, char in enumerate(text):
         if char.isdigit():
-            current_number += char
-        else:
-            if 13 <= len(current_number) <= 16 and luhn_check(current_number):
-                potential_cards.append((current_number, line_number))
+            cleaned_text += char
+            original_indices.append(i)
+
+    potential_cards = []
+
+    # 从清理过的文本中检测潜在的信用卡号
+    current_number = ""
+    current_indices = []
+
+    for i, char in enumerate(cleaned_text):
+        current_number += char
+        current_indices.append(original_indices[i])
+
+        # 检查长度和Luhn算法
+        if 13 <= len(current_number) <= 16 and luhn_check(current_number):
+            potential_cards.append((current_number, line_number, current_indices))
             current_number = ""
+            current_indices = []
 
     # 最后一个可能的卡号检查
     if 13 <= len(current_number) <= 16 and luhn_check(current_number):
-        potential_cards.append((current_number, line_number))
+        potential_cards.append((current_number, line_number, current_indices))
 
     return potential_cards
 
@@ -154,7 +166,7 @@ def detect_file_type(filename):
 
         if 'text/plain' in output:
             return FileType.ASCII
-        elif 'executable' in output or 'x-sharedlib' in output: #x-sharedlib属于共享库文件没必要检测
+        elif 'executable' in output:
             return FileType.EXECUTABLE
         elif 'image' in output:
             return FileType.IMAGE
@@ -241,9 +253,9 @@ def parse_with_textract(filename):
         for i, line in enumerate(lines, start=1):
             detected_cards.extend(find_potential_credit_card_numbers(line, line_number=i))
 
-        for card, line_number in detected_cards:
+        for card, line_number, original_indices in detected_cards:
             card_type = get_card_type(card)
-            if card not in ignore_list:
+            if card not in ignore_list and card_type != 'Unknown':  # 跳过Unknown卡
                 # 使用组合路径
                 output_path = os.path.join(current_parent_path, os.path.basename(filename)) if current_parent_path else filename
                 print(f"Detected {card_type} card in {output_path} at line {line_number}: {card}")
@@ -251,7 +263,8 @@ def parse_with_textract(filename):
                     "filename": output_path,
                     "line_number": line_number,
                     "card_number": card,
-                    "card_type": card_type
+                    "card_type": card_type,
+                    "original_indices": original_indices
                 })
                 total_count += 1
         return len(detected_cards)
@@ -273,9 +286,9 @@ def search_file_content(filename):
             for line_number, line in enumerate(f, start=1):
                 detected_cards.extend(find_potential_credit_card_numbers(line, line_number=line_number))
 
-            for card, line_number in detected_cards:
+            for card, line_number, original_indices in detected_cards:
                 card_type = get_card_type(card)
-                if card not in ignore_list:
+                if card not in ignore_list and card_type != 'Unknown':  # 跳过Unknown卡
                     # 使用组合路径
                     output_path = os.path.join(current_parent_path, os.path.basename(filename)) if current_parent_path else filename
                     print(f"Detected {card_type} card in {output_path} at line {line_number}: {card}")
@@ -283,7 +296,8 @@ def search_file_content(filename):
                         "filename": output_path,
                         "line_number": line_number,
                         "card_number": card,
-                        "card_type": card_type
+                        "card_type": card_type,
+                        "original_indices": original_indices
                     })
                     total_count += 1
         return len(detected_cards)
