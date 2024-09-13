@@ -1,7 +1,7 @@
 # ccsrch-python3
 ccsrch-python是一个信用卡数据扫描识别工具，参考（https://github.com/roganartu/ccsrch）<br>
 原作者使用c写的，我用python3重写了ccsrch，实现了原作者写的那些基本功能<br>
-使用python3重写后可扩展性更强一些,但性能比c要弱很多(主要是我c太菜😭)
+使用python3重写后可扩展性更强一些,但性能比c要弱很多(主要是我c太菜😭)<br>
 #PCI DSS #card scan #信用卡数据扫描
 
 ## 用法
