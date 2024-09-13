@@ -154,7 +154,7 @@ def detect_file_type(filename):
 
         if 'text/plain' in output:
             return FileType.ASCII
-        elif 'executable' in output:
+        elif 'executable' in output or 'x-sharedlib' in output: #x-sharedlib属于共享库文件没必要检测
             return FileType.EXECUTABLE
         elif 'image' in output:
             return FileType.IMAGE
