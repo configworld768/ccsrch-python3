@@ -15,4 +15,5 @@ python ccsrch.py -i ignore_list.txt -n .exe,.dll /path/to/scan
 -i 参数是将一些不扫描的文件放在 ignore_list.txt中，相当于是基于文件名的白名单
 -n 参数是制定某些后缀名的文件不扫描,比如.dll文件等
 ```
-
+## 扫描测试文件
+![image](https://github.com/configworld768/ccsrch-python3/blob/main/img/WechatIMG333.png)<br>
