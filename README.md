@@ -75,6 +75,109 @@ python ccsrch.py --json-output -i ignore_list.txt -n .exe,.dll /path/to/scan
 ![image](https://github.com/configworld768/ccsrch-python3/blob/main/img/%E6%88%AA%E5%B1%8F2020-09-14%2017.05.44.png)<br>
 
 ## 卡号脱敏
-![image](https://github.com/configworld768/ccsrch-python3/blob/main/img/%E6%88%AA%E5%B1%8F2020-09-14%2017.44.02.png)<br>
-![image](https://github.com/configworld768/ccsrch-python3/blob/main/img/%E6%88%AA%E5%B1%8F2020-09-14%2018.01.27.png)<br>
+```json
+{
+        "filename": "/root/ccsrch/tests/tmp/Dummy.zip/bridgepoint.rtf",
+        "line_number": 19,
+        "card_number": "4716######0696",
+        "card_type": "VISA",
+        "context": "[edit]History\n\n\n\n\n\nVISA, 4716-2046-3895-0696\n\n\n\nIn the mid-1980s a need arose for a standardized, vendor-neutral, certi
+fication program that provided structure and demonstrated competence. In November 1988, the Special Interest Group for Computer Security (SIG-CS), a 
+member of the Data Processing Management Association (DPMA), brought together several organizations interested in this. The International Information
+ Systems Security Certification Consortium or \"(ISC)\" formed in mid-1989 as a non-profit organization with this goal.[5][6][7]\n\n[edit]Certificati
+on subject matter\n"
+    },
+    {
+        "filename": "/tmp/tmp3evkjhxg/Dummy/ContaminatedData/ValidPAN/archive.zip/list.xml",
+        "line_number": 25,
+        "card_number": "3876####5160",
+        "card_type": "Diners Club",
+        "context": "    <GetCapabilitiesUrl>http://demo.cubewerx.com/demo/cubeserv/cubeserv.cgi</GetCapabilitiesUrl>\n\n  </Server>\n\n  <Server>\n\n
+    <GetCapabilitiesUrl>Diners 3876####5160</GetCapabilitiesUrl>\n\n  </Server>\n\n  <Server>\n\n    <GetCapabilitiesUrl>http://ims.cr.usgs.gov/servl
+et19/com.esri.wms.Esrimap/USGS_EDC_Elev_NED</GetCapabilitiesUrl>\n"
+    },
+    {
+        "filename": "/tmp/tmp3evkjhxg/Dummy/ContaminatedData/Track Data/trackExample.zip/zipzip.xml",
+        "line_number": 7,
+        "card_number": "4485######2217",
+        "card_type": "VISA",
+        "context": "    <ttl>1</ttl>\n\n    <domain>104.com.tw</domain>\n\n    <domain docMode=\"EmulateIE8\">10jqka.com.cn</domain>\n\n    <domain>;
+4485######2217=121212054321999876?1</domain>\n\n    <domain docMode=\"EmulateIE8\">115.com</domain>\n\n    <domain>118114.cn</domain>\n\n    <domain 
+docMode=\"EmulateIE8\">12306.cn</domain>\n"
+    },
+    {
+        "filename": "/root/ccsrch/tests/tmp/Dummy.zip/iecompatdata.xml",
+        "line_number": 7,
+        "card_number": "4485######2217",
+        "card_type": "VISA",
+        "context": "    <ttl>1</ttl>\n\n    <domain>104.com.tw</domain>\n\n    <domain docMode=\"EmulateIE8\">10jqka.com.cn</domain>\n\n    <domain>;
+4485######2217=121212054321999876?1</domain>\n\n    <domain docMode=\"EmulateIE8\">115.com</domain>\n\n    <domain>118114.cn</domain>\n\n    <domain 
+docMode=\"EmulateIE8\">12306.cn</domain>\n"
+    },
+ {
+        "filename": "/root/ccsrch/tests/test2.zip/basic.txt",
+        "line_number": 12,
+        "card_number": "4485######2217",
+        "card_type": "VISA",
+        "context": "MasterCard, 5173582815239055\n\n\n\nVISA, 4012888888881881\n\nVISA, 4485######2217\n\nVISA, 4716204638950696\n\nVISA, 4485######2
+217\n\nVISA, 4716204638950696\n"
+    },
+    {
+        "filename": "/root/ccsrch/tests/test2.zip/basic.txt",
+        "line_number": 13,
+        "card_number": "4716######0696",
+        "card_type": "VISA",
+        "context": "\n\nVISA, 4012888888881881\n\nVISA, 4485983356242217\n\nVISA, 4716######0696\n\nVISA, 4485983356242217\n\nVISA, 4716######0696\n\
+nVISA, 4024007135532710\n"
+    },
+    {
+        "filename": "/root/ccsrch/tests/test2.zip/basic.txt",
+        "line_number": 14,
+        "card_number": "4485######2217",
+        "card_type": "VISA",
+        "context": "VISA, 4012888888881881\n\nVISA, 4485######2217\n\nVISA, 4716204638950696\n\nVISA, 4485######2217\n\nVISA, 4716204638950696\n\nVIS
+A, 4024007135532710\n\nVISA, 4556474670906442\n"
+    },
+    {
+        "filename": "/root/ccsrch/tests/test2.zip/basic.txt",
+        "line_number": 15,
+        "card_number": "4716######0696",
+        "card_type": "VISA",
+        "context": "VISA, 4485983356242217\n\nVISA, 4716######0696\n\nVISA, 4485983356242217\n\nVISA, 4716######0696\n\nVISA, 4024007135532710\n\nVIS
+A, 4556474670906442\n\nVISA, 4929391046267988\n"
+    },
+    {
+        "filename": "/root/ccsrch/tests/test2.zip/basic.txt",
+        "line_number": 16,
+        "card_number": "4024###5532",
+        "card_type": "VISA",
+        "context": "VISA, 4716204638950696\n\nVISA, 4485983356242217\n\nVISA, 4716204638950696\n\nVISA, 4024###5532710\n\nVISA, 4556474670906442\n\nV
+ISA, 4929391046267988\n\n\n"
+    },
+    {
+        "filename": "/root/ccsrch/tests/test2.zip/basic.txt",
+        "line_number": 18,
+        "card_number": "4929######7988",
+        "card_type": "VISA",
+        "context": "VISA, 4716204638950696\n\nVISA, 4024007135532710\n\nVISA, 4556474670906442\n\nVISA, 4929######7988\n\n\n\nAmerican Express, 37873
+4493671000\n\n\n"
+    },
+    {
+        "filename": "/root/ccsrch/tests/test2.zip/basic.txt",
+        "line_number": 34,
+        "card_number": "4485###2342",
+        "card_type": "VISA",
+        "context": "MasterCard, 5173452815239055\n\n\n\nVISA, 4012888888481581\n\nVISA, 4485###2342217\n\nVISA, 4716204852950696\n\nVISA, 45859833562
+42217\n\nVISA, 4716204638950850\n"
+    },
+    {
+        "filename": "/root/ccsrch/tests/test2.zip/basic.txt",
+        "line_number": 40,
+        "card_number": "4939###6267",
+        "card_type": "VISA",
+        "context": "VISA, 4716204638950850\n\nVISA, 4024000135532710\n\nVISA, 8956474670906442\n\nVISA, 4939###6267988\n\n\n\nAmerican Express, 38873
+4498671000\n"
+    },
+```
+
 
