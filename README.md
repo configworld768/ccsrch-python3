@@ -13,6 +13,7 @@ python ccsrch.py [options] <start_path>
 ## 例如
 ```bash
 python ccsrch.py --json-output -i ignore_list.txt -n .exe,.dll /path/to/scan
+
 -i 参数是将一些不扫描的文件放在 ignore_list.txt中，相当于是基于文件名的白名单
 -n 参数是制定某些后缀名的文件不扫描,比如.dll文件等
 --json-output 参数选择json结果输出
