@@ -18,3 +18,5 @@ python ccsrch.py --json-output -i ignore_list.txt -n .exe,.dll /path/to/scan
 ```
 ## 扫描测试文件
 ![image](https://github.com/configworld768/ccsrch-python3/blob/main/img/WechatIMG333.png)<br>
+
+## 增加新功能：打印卡号上下文内容,方便人工识别是否是真实的卡号信息
