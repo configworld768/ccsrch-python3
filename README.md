@@ -68,8 +68,6 @@ python ccsrch.py --json-output -i ignore_list.txt -n .exe,.dll /path/to/scan
 -n 参数是制定某些后缀名的文件不扫描,比如.dll文件等
 --json-output 参数选择json结果输出
 ```
-## 扫描测试文件
-![image](https://github.com/configworld768/ccsrch-python3/blob/main/img/WechatIMG333.png)<br>
 
 ## 增加新功能：打印卡号上下文内容,方便人工识别是否是真实的卡号信息
 ![image](https://github.com/configworld768/ccsrch-python3/blob/main/img/%E6%88%AA%E5%B1%8F2020-09-14%2017.05.44.png)<br>
@@ -123,60 +121,61 @@ docMode=\"EmulateIE8\">12306.cn</domain>\n"
 217\n\nVISA, 4716204638950696\n"
     },
     {
-        "filename": "/root/ccsrch/tests/test2.zip/basic.txt",
-        "line_number": 13,
-        "card_number": "4716######0696",
-        "card_type": "VISA",
-        "context": "\n\nVISA, 4012888888881881\n\nVISA, 4485983356242217\n\nVISA, 4716######0696\n\nVISA, 4485983356242217\n\nVISA, 4716######0696\n\
-nVISA, 4024007135532710\n"
+        "filename": "/root/ccsrch/tests/Dummy.zip/cissp.txt",
+        "line_number": 27,
+        "card_number": "5135######0694",
+        "card_type": "MasterCard",
+        "context": "\n\nTrack1\n\n\n\n%B5135######0694^BARAK/OBAMA^121210100896000000?1\n\n\n\n\n\n\n"
     },
     {
-        "filename": "/root/ccsrch/tests/test2.zip/basic.txt",
-        "line_number": 14,
+        "filename": "/root/ccsrch/tests/Dummy.zip/army.pdf",
+        "line_number": 103,
+        "card_number": "3024####2904",
+        "card_type": "Diners Club",
+        "context": "\nTrack1 \n\n%B3024####2904^MONTGOMERY/JAMES^121210100896000000?1 \n\n\n "
+    },
+    {
+        "filename": "/tmp/tmpz_3mkufr/Dummy/ContaminatedData/Track Data/archive.zip/list.xml",
+        "line_number": 25,
+        "card_number": "3876####5160",
+        "card_type": "Diners Club",
+        "context": "    <GetCapabilitiesUrl>http://demo.cubewerx.com/demo/cubeserv/cubeserv.cgi</GetCapabilitiesUrl>\n\n  </Server>\n\n  <Server>\n\n
+    <GetCapabilitiesUrl>Diners 3876####5160</GetCapabilitiesUrl>\n\n  </Server>\n\n  <Server>\n\n    <GetCapabilitiesUrl>http://ims.cr.usgs.gov/servl
+et19/com.esri.wms.Esrimap/USGS_EDC_Elev_NED</GetCapabilitiesUrl>\n"
+    },
+{
+        "filename": "/root/ccsrch/tests/Dummy.zip/WmsServerList.xml",
+        "line_number": 25,
+        "card_number": "3876####5160",
+        "card_type": "Diners Club",
+        "context": "    <GetCapabilitiesUrl>http://demo.cubewerx.com/demo/cubeserv/cubeserv.cgi</GetCapabilitiesUrl>\n\n  </Server>\n\n  <Server>\n\n
+    <GetCapabilitiesUrl>Diners 3876####5160</GetCapabilitiesUrl>\n\n  </Server>\n\n  <Server>\n\n    <GetCapabilitiesUrl>http://ims.cr.usgs.gov/servl
+et19/com.esri.wms.Esrimap/USGS_EDC_Elev_NED</GetCapabilitiesUrl>\n"
+    },
+    {
+        "filename": "/tmp/tmpz_3mkufr/Dummy/ContaminatedData/ValidPAN/stuff.tar/list.xml",
+        "line_number": 25,
+        "card_number": "3876####5160",
+        "card_type": "Diners Club",
+        "context": "    <GetCapabilitiesUrl>http://demo.cubewerx.com/demo/cubeserv/cubeserv.cgi</GetCapabilitiesUrl>\n\n  </Server>\n\n  <Server>\n\n
+    <GetCapabilitiesUrl>Diners 3876####5160</GetCapabilitiesUrl>\n\n  </Server>\n\n  <Server>\n\n    <GetCapabilitiesUrl>http://ims.cr.usgs.gov/servl
+et19/com.esri.wms.Esrimap/USGS_EDC_Elev_NED</GetCapabilitiesUrl>\n"
+    },
+    {
+        "filename": "/root/ccsrch/tests/Dummy.zip/StartupParameters.plist",
+        "line_number": 11,
         "card_number": "4485######2217",
         "card_type": "VISA",
-        "context": "VISA, 4012888888881881\n\nVISA, 4485######2217\n\nVISA, 4716204638950696\n\nVISA, 4485######2217\n\nVISA, 4716204638950696\n\nVIS
-A, 4024007135532710\n\nVISA, 4556474670906442\n"
+        "context": "    {\n\n        start   = \"Starting Cisco Systems VPN Client Kernel Extension\";\n\n        stop    = \"Stopping Cisco Systems 
+VPN Client Kernel Extension\";\n\n\tcredit_card = \"VISA, 4485######2217\";\n\n    };\n\n}\n"
     },
     {
-        "filename": "/root/ccsrch/tests/test2.zip/basic.txt",
-        "line_number": 15,
-        "card_number": "4716######0696",
+        "filename": "/root/ccsrch/tests/Dummy.zip/restaurant.xml",
+        "line_number": 25,
+        "card_number": "4485######2217",
         "card_type": "VISA",
-        "context": "VISA, 4485983356242217\n\nVISA, 4716######0696\n\nVISA, 4485983356242217\n\nVISA, 4716######0696\n\nVISA, 4024007135532710\n\nVIS
-A, 4556474670906442\n\nVISA, 4929391046267988\n"
-    },
-    {
-        "filename": "/root/ccsrch/tests/test2.zip/basic.txt",
-        "line_number": 16,
-        "card_number": "4024###5532",
-        "card_type": "VISA",
-        "context": "VISA, 4716204638950696\n\nVISA, 4485983356242217\n\nVISA, 4716204638950696\n\nVISA, 4024###5532710\n\nVISA, 4556474670906442\n\nV
-ISA, 4929391046267988\n\n\n"
-    },
-    {
-        "filename": "/root/ccsrch/tests/test2.zip/basic.txt",
-        "line_number": 18,
-        "card_number": "4929######7988",
-        "card_type": "VISA",
-        "context": "VISA, 4716204638950696\n\nVISA, 4024007135532710\n\nVISA, 4556474670906442\n\nVISA, 4929######7988\n\n\n\nAmerican Express, 37873
-4493671000\n\n\n"
-    },
-    {
-        "filename": "/root/ccsrch/tests/test2.zip/basic.txt",
-        "line_number": 34,
-        "card_number": "4485###2342",
-        "card_type": "VISA",
-        "context": "MasterCard, 5173452815239055\n\n\n\nVISA, 4012888888481581\n\nVISA, 4485###2342217\n\nVISA, 4716204852950696\n\nVISA, 45859833562
-42217\n\nVISA, 4716204638950850\n"
-    },
-    {
-        "filename": "/root/ccsrch/tests/test2.zip/basic.txt",
-        "line_number": 40,
-        "card_number": "4939###6267",
-        "card_type": "VISA",
-        "context": "VISA, 4716204638950850\n\nVISA, 4024000135532710\n\nVISA, 8956474670906442\n\nVISA, 4939###6267988\n\n\n\nAmerican Express, 38873
-4498671000\n"
+        "context": "\t</restaurant>\n\n\t<restaurant name=\"Buffalo Grill\">\n\n\t\t<address>12 Chapel Street, Edinburgh, EH8 9AY</address>\n\n\t\t<c
+uisine>VISA, 4485-9833-5624-2217</cuisine>\n\n\t\t<phoneno>01316677427</phoneno>\n\n\t</restaurant>\n\n\t<restaurant name=\"Nile Valley\">\n"
     },
 ```
 
