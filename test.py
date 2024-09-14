@@ -146,7 +146,7 @@ def mask_card_number(card_number):
     """对信用卡号进行脱敏处理"""
     if len(card_number) <= 4:
         return card_number  # 卡号太短不需要脱敏
-    return card_number[:4] + "#" * (len(card_number) - 8) + card_number[-4:]
+    return card_number[:4] + "#" * (len(card_number) - 10) + card_number[-4:]
 
 # 初始化模块
 def initialise_mods():
