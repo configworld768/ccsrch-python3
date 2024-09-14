@@ -4,9 +4,9 @@ import signal
 import subprocess
 import tempfile
 import shutil
-import json
+import json  # 引入json模块用于JSON格式输出
 from datetime import datetime
-import textract
+import textract  # 引入textract包用于处理各种文档类型
 
 # 全局变量定义
 logfilename = None
@@ -21,10 +21,9 @@ ignore_list = set()
 file_extensions_to_exclude = set()
 processing_docx = False
 processing_xlsx = False
-results = []
-json_output_enabled = False
-current_parent_path = ""
-CONTEXT_LENGTH = 100  # 增加上下文长度
+results = []  # 用于存储结果的全局列表
+json_output_enabled = False  # JSON 输出的开关
+current_parent_path = ""  # 保存压缩文件的路径
 
 # 文件类型枚举
 class FileType:
@@ -167,7 +166,7 @@ def detect_file_type(filename):
 
         if 'text/plain' in output:
             return FileType.ASCII
-        elif 'executable' in output:
+        elif 'executable' in output or 'x-sharedlib' in output:
             return FileType.EXECUTABLE
         elif 'image' in output:
             return FileType.IMAGE
@@ -261,7 +260,7 @@ def parse_with_textract(filename):
                 output_path = os.path.join(current_parent_path, os.path.basename(filename)) if current_parent_path else filename
                 
                 # 获取卡号上下文
-                context = get_card_context(text, original_indices)
+                context = get_card_context(lines, line_number)
                 
                 print(f"Detected {card_type} card in {output_path} at line {line_number}: {card}")
                 print("Context:")
@@ -281,19 +280,13 @@ def parse_with_textract(filename):
         return 0
 
 # 获取信用卡号的上下文
-def get_card_context(text, indices):
-    # 保证提取的上下文包含完整的信用卡号
-    start_index = max(indices[0] - CONTEXT_LENGTH, 0)
-    end_index = min(indices[-1] + CONTEXT_LENGTH + 1, len(text))
+def get_card_context(lines, line_number):
+    # 确保打印上下三行和当前行
+    start_line = max(line_number - 4, 0)
+    end_line = min(line_number + 3, len(lines))
     
-    # 确保卡号在上下文中
-    context = text[start_index:end_index]
-    card_number_position = context.find(''.join([text[i] for i in indices]))
-    if card_number_position == -1:  # 如果卡号不在上下文中，重新调整上下文范围
-        start_index = max(indices[0] - CONTEXT_LENGTH // 2, 0)
-        end_index = min(indices[-1] + CONTEXT_LENGTH // 2 + 1, len(text))
-        context = text[start_index:end_index]
-    
+    # 提取上下文
+    context = "\n".join(lines[start_line:end_line])
     return context
 
 # 检查文件类型是否允许
@@ -306,8 +299,9 @@ def search_file_content(filename):
     global ignore_list, total_count, results, current_parent_path
     try:
         with open(filename, 'r', errors='ignore') as f:
+            lines = f.readlines()
             detected_cards = []
-            for line_number, line in enumerate(f, start=1):
+            for line_number, line in enumerate(lines, start=1):
                 detected_cards.extend(find_potential_credit_card_numbers(line, line_number=line_number))
 
             for card, line_number, original_indices in detected_cards:
@@ -317,7 +311,7 @@ def search_file_content(filename):
                     output_path = os.path.join(current_parent_path, os.path.basename(filename)) if current_parent_path else filename
                     
                     # 获取卡号上下文
-                    context = get_card_context(line, original_indices)
+                    context = get_card_context(lines, line_number)
                     
                     print(f"Detected {card_type} card in {output_path} at line {line_number}: {card}")
                     print("Context:")
@@ -355,7 +349,7 @@ def unzip_and_parse(filename):
 # 解压GZIP文件
 def gunzip_and_parse(filename):
     global current_parent_path
-    temp_file = tempfile.mkstemp()[1]
+    temp_file = tempfile.mkdtemp()[1]
     try:
         # 保存当前压缩文件的路径
         original_parent_path = current_parent_path
