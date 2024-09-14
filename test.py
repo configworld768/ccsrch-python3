@@ -24,6 +24,7 @@ processing_xlsx = False
 results = []  # 用于存储结果的全局列表
 json_output_enabled = False  # JSON 输出的开关
 current_parent_path = ""  # 保存压缩文件的路径
+mask_card_numbers = False  # 脱敏功能的开关
 
 # 文件类型枚举
 class FileType:
@@ -140,6 +141,12 @@ def is_diners_club(card_number):
     """检测Diners Club卡"""
     return len(card_number) == 14 and (300 <= int(card_number[:3]) <= 305 or
                                        card_number[:2] in ['36', '38'])
+
+def mask_card_number(card_number):
+    """对信用卡号进行脱敏处理"""
+    if len(card_number) <= 4:
+        return card_number  # 卡号太短不需要脱敏
+    return card_number[:4] + "#" * (len(card_number) - 8) + card_number[-4:]
 
 # 初始化模块
 def initialise_mods():
@@ -259,17 +266,20 @@ def parse_with_textract(filename):
                 # 使用组合路径
                 output_path = os.path.join(current_parent_path, os.path.basename(filename)) if current_parent_path else filename
                 
-                # 获取卡号上下文
-                context = get_card_context(lines, line_number)
+                # 卡号脱敏处理
+                displayed_card = mask_card_number(card) if mask_card_numbers else card
                 
-                print(f"Detected {card_type} card in {output_path} at line {line_number}: {card}")
+                # 获取卡号上下文，并进行脱敏处理
+                context = get_card_context(lines, line_number, card) if mask_card_numbers else get_card_context(lines, line_number)
+                
+                print(f"Detected {card_type} card in {output_path} at line {line_number}: {displayed_card}")
                 print("Context:")
                 print(context)
                 
                 results.append({
                     "filename": output_path,
                     "line_number": line_number,
-                    "card_number": card,
+                    "card_number": displayed_card,
                     "card_type": card_type,
                     "context": context
                 })
@@ -280,13 +290,19 @@ def parse_with_textract(filename):
         return 0
 
 # 获取信用卡号的上下文
-def get_card_context(lines, line_number):
+def get_card_context(lines, line_number, card_number=None):
     # 确保打印上下三行和当前行
     start_line = max(line_number - 4, 0)
     end_line = min(line_number + 3, len(lines))
     
     # 提取上下文
     context = "\n".join(lines[start_line:end_line])
+
+    # 如果需要脱敏，在上下文中替换信用卡号
+    if card_number:
+        masked_card = mask_card_number(card_number)
+        context = context.replace(card_number, masked_card)
+    
     return context
 
 # 检查文件类型是否允许
@@ -310,17 +326,20 @@ def search_file_content(filename):
                     # 使用组合路径
                     output_path = os.path.join(current_parent_path, os.path.basename(filename)) if current_parent_path else filename
                     
-                    # 获取卡号上下文
-                    context = get_card_context(lines, line_number)
+                    # 卡号脱敏处理
+                    displayed_card = mask_card_number(card) if mask_card_numbers else card
                     
-                    print(f"Detected {card_type} card in {output_path} at line {line_number}: {card}")
+                    # 获取卡号上下文，并进行脱敏处理
+                    context = get_card_context(lines, line_number, card) if mask_card_numbers else get_card_context(lines, line_number)
+                    
+                    print(f"Detected {card_type} card in {output_path} at line {line_number}: {displayed_card}")
                     print("Context:")
                     print(context)
                     
                     results.append({
                         "filename": output_path,
                         "line_number": line_number,
-                        "card_number": card,
+                        "card_number": displayed_card,
                         "card_type": card_type,
                         "context": context
                     })
@@ -396,7 +415,7 @@ def cleanup():
 
 # 主函数
 def main():
-    global logfilename, logfilefd, ignore_list, file_extensions_to_exclude, json_output_enabled
+    global logfilename, logfilefd, ignore_list, file_extensions_to_exclude, json_output_enabled, mask_card_numbers
 
     if len(sys.argv) < 2:
         print("Usage: python ccsrch.py <options> <start_path>")
@@ -411,6 +430,8 @@ def main():
     for i, arg in enumerate(sys.argv):
         if arg == '--json-output':
             json_output_enabled = True
+        elif arg == '--mask':
+            mask_card_numbers = True
         elif arg == '-i' and i + 1 < len(sys.argv):
             ignore_list = read_ignore_list(sys.argv[i + 1])
         elif arg == '-n' and i + 1 < len(sys.argv):
