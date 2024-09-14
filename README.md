@@ -20,4 +20,7 @@ python ccsrch.py --json-output -i ignore_list.txt -n .exe,.dll /path/to/scan
 ![image](https://github.com/configworld768/ccsrch-python3/blob/main/img/WechatIMG333.png)<br>
 
 ## 增加新功能：打印卡号上下文内容,方便人工识别是否是真实的卡号信息
-![image](https://github.com/configworld768/ccsrch-python3/blob/main/img/%E6%88%AA%E5%B1%8F2024-09-14%2017.05.44.png)<br>
+![image](https://github.com/configworld768/ccsrch-python3/blob/main/img/%E6%88%AA%E5%B1%8F2020-09-14%2017.05.44.png)<br>
+
+## 卡号脱敏
+![image](https://github.com/configworld768/ccsrch-python3/blob/main/img/%E6%88%AA%E5%B1%8F2020-09-14%2017.44.02.png)<br>
