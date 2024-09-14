@@ -69,10 +69,7 @@ python ccsrch.py --json-output -i ignore_list.txt -n .exe,.dll /path/to/scan
 --json-output 参数选择json结果输出
 ```
 
-## 增加新功能：打印卡号上下文内容,方便人工识别是否是真实的卡号信息
-![image](https://github.com/configworld768/ccsrch-python3/blob/main/img/%E6%88%AA%E5%B1%8F2020-09-14%2017.05.44.png)<br>
-
-## 卡号脱敏
+## 增加新功能：打印卡号上下文内容,方便人工识别是否是真实的卡号信息以及卡号脱敏
 ```json
 {
         "filename": "/root/ccsrch/tests/tmp/Dummy.zip/bridgepoint.rtf",
