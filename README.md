@@ -24,3 +24,5 @@ python ccsrch.py --json-output -i ignore_list.txt -n .exe,.dll /path/to/scan
 
 ## 卡号脱敏
 ![image](https://github.com/configworld768/ccsrch-python3/blob/main/img/%E6%88%AA%E5%B1%8F2020-09-14%2017.44.02.png)<br>
+![image](https://github.com/configworld768/ccsrch-python3/blob/main/img/%E6%88%AA%E5%B1%8F2020-09-14%2018.01.27.png)<br>
+
