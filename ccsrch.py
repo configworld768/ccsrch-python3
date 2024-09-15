@@ -1,4 +1,3 @@
-#by huowuzhao
 import os
 import sys
 import signal
@@ -8,6 +7,7 @@ import shutil
 import json  # 引入json模块用于JSON格式输出
 from datetime import datetime
 import textract  # 引入textract包用于处理各种文档类型
+import re  # 引入正则表达式模块
 
 # 全局变量定义
 logfilename = None
@@ -25,6 +25,7 @@ processing_xlsx = False
 results = []  # 用于存储结果的全局列表
 json_output_enabled = False  # JSON 输出的开关
 current_parent_path = ""  # 保存压缩文件的路径
+mask_card_numbers = False  # 脱敏功能的开关
 
 # 文件类型枚举
 class FileType:
@@ -67,51 +68,37 @@ def luhn_check(card_number):
     return checksum % 10 == 0
 
 def find_potential_credit_card_numbers(text, line_number=None):
-    # 去除非数字字符，保持原始位置索引
-    cleaned_text = ""
-    original_indices = []
-
-    for i, char in enumerate(text):
-        if char.isdigit():
-            cleaned_text += char
-            original_indices.append(i)
+    # 使用正则表达式查找潜在的信用卡号
+    card_pattern = r'\b(?:\d[ -]*?){13,16}\b'
+    matches = re.finditer(card_pattern, text)
 
     potential_cards = []
 
-    # 从清理过的文本中检测潜在的信用卡号
-    current_number = ""
-    current_indices = []
-
-    for i, char in enumerate(cleaned_text):
-        current_number += char
-        current_indices.append(original_indices[i])
-
-        # 检查长度和Luhn算法
-        if 13 <= len(current_number) <= 16 and luhn_check(current_number):
-            potential_cards.append((current_number, line_number, current_indices))
-            current_number = ""
-            current_indices = []
-
-    # 最后一个可能的卡号检查
-    if 13 <= len(current_number) <= 16 and luhn_check(current_number):
-        potential_cards.append((current_number, line_number, current_indices))
+    for match in matches:
+        card_number = match.group()
+        # 去除卡号中的空格和破折号
+        cleaned_number = re.sub(r'[^0-9]', '', card_number)
+        if 13 <= len(cleaned_number) <= 16 and luhn_check(cleaned_number):
+            start_offset = match.start()
+            potential_cards.append((card_number, line_number, start_offset))
 
     return potential_cards
 
 # 信用卡类型检测函数
 def get_card_type(card_number):
     """检测信用卡类型"""
-    if is_visa(card_number):
+    cleaned_number = re.sub(r'[^0-9]', '', card_number)  # 去除非数字字符
+    if is_visa(cleaned_number):
         return 'VISA'
-    elif is_mastercard(card_number):
+    elif is_mastercard(cleaned_number):
         return 'MasterCard'
-    elif is_amex(card_number):
+    elif is_amex(cleaned_number):
         return 'American Express'
-    elif is_discover(card_number):
+    elif is_discover(cleaned_number):
         return 'Discover'
-    elif is_jcb(card_number):
+    elif is_jcb(cleaned_number):
         return 'JCB'
-    elif is_diners_club(card_number):
+    elif is_diners_club(cleaned_number):
         return 'Diners Club'
     else:
         return 'Unknown'
@@ -141,6 +128,12 @@ def is_diners_club(card_number):
     """检测Diners Club卡"""
     return len(card_number) == 14 and (300 <= int(card_number[:3]) <= 305 or
                                        card_number[:2] in ['36', '38'])
+
+def mask_card_number(card_number):
+    """对信用卡号进行脱敏处理"""
+    if len(card_number) <= 4:
+        return card_number  # 卡号太短不需要脱敏
+    return card_number[:4] + "#" * (len(card_number) - 10) + card_number[-4:]
 
 # 初始化模块
 def initialise_mods():
@@ -254,24 +247,59 @@ def parse_with_textract(filename):
         for i, line in enumerate(lines, start=1):
             detected_cards.extend(find_potential_credit_card_numbers(line, line_number=i))
 
-        for card, line_number, original_indices in detected_cards:
+        for card, line_number, start_offset in detected_cards:
             card_type = get_card_type(card)
             if card not in ignore_list and card_type != 'Unknown':  # 跳过Unknown卡
                 # 使用组合路径
                 output_path = os.path.join(current_parent_path, os.path.basename(filename)) if current_parent_path else filename
-                print(f"Detected {card_type} card in {output_path} at line {line_number}: {card}")
+                
+                # 卡号脱敏处理
+                displayed_card = mask_card_number(card) if mask_card_numbers else card
+                
+                # 获取卡号上下文，并进行脱敏处理
+                context = get_card_context(lines, line_number, card) if mask_card_numbers else get_card_context(lines, line_number)
+                
+                # 获取文件时间信息
+                file_mtime = datetime.fromtimestamp(os.path.getmtime(filename)).isoformat()
+                file_atime = datetime.fromtimestamp(os.path.getatime(filename)).isoformat()
+                file_ctime = datetime.fromtimestamp(os.path.getctime(filename)).isoformat()
+                
+                print(f"Detected {card_type} card in {output_path} at line {line_number}: {displayed_card}")
+                print(f"Context:\n{context}")
+                print(f"Modification Time: {file_mtime}, Access Time: {file_atime}, Creation Time: {file_ctime}, Byte Offset: {start_offset}")
+                
                 results.append({
                     "filename": output_path,
                     "line_number": line_number,
-                    "card_number": card,
+                    "card_number": displayed_card,
                     "card_type": card_type,
-                    "original_indices": original_indices
+                    "context": context,
+                    "modification_time": file_mtime,
+                    "access_time": file_atime,
+                    "creation_time": file_ctime,
+                    "byte_offset": start_offset
                 })
                 total_count += 1
         return len(detected_cards)
     except Exception as e:
         print(f"Error processing file {filename} with textract: {e}")
         return 0
+
+# 获取信用卡号的上下文
+def get_card_context(lines, line_number, card_number=None):
+    # 确保打印上下三行和当前行
+    start_line = max(line_number - 4, 0)
+    end_line = min(line_number + 3, len(lines))
+    
+    # 提取上下文
+    context = "\n".join(lines[start_line:end_line])
+
+    # 如果需要脱敏，在上下文中替换信用卡号
+    if card_number:
+        masked_card = mask_card_number(card_number)
+        context = re.sub(re.escape(card_number), masked_card, context)
+    
+    return context
 
 # 检查文件类型是否允许
 def is_allowed_file_type(name):
@@ -283,22 +311,42 @@ def search_file_content(filename):
     global ignore_list, total_count, results, current_parent_path
     try:
         with open(filename, 'r', errors='ignore') as f:
+            lines = f.readlines()
             detected_cards = []
-            for line_number, line in enumerate(f, start=1):
+            for line_number, line in enumerate(lines, start=1):
                 detected_cards.extend(find_potential_credit_card_numbers(line, line_number=line_number))
 
-            for card, line_number, original_indices in detected_cards:
+            for card, line_number, start_offset in detected_cards:
                 card_type = get_card_type(card)
                 if card not in ignore_list and card_type != 'Unknown':  # 跳过Unknown卡
                     # 使用组合路径
                     output_path = os.path.join(current_parent_path, os.path.basename(filename)) if current_parent_path else filename
-                    print(f"Detected {card_type} card in {output_path} at line {line_number}: {card}")
+                    
+                    # 卡号脱敏处理
+                    displayed_card = mask_card_number(card) if mask_card_numbers else card
+                    
+                    # 获取卡号上下文，并进行脱敏处理
+                    context = get_card_context(lines, line_number, card) if mask_card_numbers else get_card_context(lines, line_number)
+                    
+                    # 获取文件时间信息
+                    file_mtime = datetime.fromtimestamp(os.path.getmtime(filename)).isoformat()
+                    file_atime = datetime.fromtimestamp(os.path.getatime(filename)).isoformat()
+                    file_ctime = datetime.fromtimestamp(os.path.getctime(filename)).isoformat()
+                    
+                    print(f"Detected {card_type} card in {output_path} at line {line_number}: {displayed_card}")
+                    print(f"Context:\n{context}")
+                    print(f"Modification Time: {file_mtime}, Access Time: {file_atime}, Creation Time: {file_ctime}, Byte Offset: {start_offset}")
+                    
                     results.append({
                         "filename": output_path,
                         "line_number": line_number,
-                        "card_number": card,
+                        "card_number": displayed_card,
                         "card_type": card_type,
-                        "original_indices": original_indices
+                        "context": context,
+                        "modification_time": file_mtime,
+                        "access_time": file_atime,
+                        "creation_time": file_ctime,
+                        "byte_offset": start_offset
                     })
                     total_count += 1
         return len(detected_cards)
@@ -325,7 +373,7 @@ def unzip_and_parse(filename):
 # 解压GZIP文件
 def gunzip_and_parse(filename):
     global current_parent_path
-    temp_file = tempfile.mkstemp()[1]
+    temp_file = tempfile.mkdtemp()[1]
     try:
         # 保存当前压缩文件的路径
         original_parent_path = current_parent_path
@@ -372,7 +420,7 @@ def cleanup():
 
 # 主函数
 def main():
-    global logfilename, logfilefd, ignore_list, file_extensions_to_exclude, json_output_enabled
+    global logfilename, logfilefd, ignore_list, file_extensions_to_exclude, json_output_enabled, mask_card_numbers
 
     if len(sys.argv) < 2:
         print("Usage: python ccsrch.py <options> <start_path>")
@@ -387,6 +435,8 @@ def main():
     for i, arg in enumerate(sys.argv):
         if arg == '--json-output':
             json_output_enabled = True
+        elif arg == '--mask':
+            mask_card_numbers = True
         elif arg == '-i' and i + 1 < len(sys.argv):
             ignore_list = read_ignore_list(sys.argv[i + 1])
         elif arg == '-n' and i + 1 < len(sys.argv):
