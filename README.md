@@ -8,6 +8,7 @@ ccsrch_regex.py是正则版本，替换正则表达式再改改判断方式可�
 
 ## 用法
 ```bash
+pip3 install textract
 python ccsrch.py [options] <start_path>
 ```
 
