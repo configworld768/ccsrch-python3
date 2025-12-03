@@ -114,19 +114,22 @@ class CreditCardScanner:
                     clean_card not in self.ignore_list):
                     
                     card_type = self.get_card_type(clean_card)
-                    final_card = self.mask_card(raw_card) if self.mask_enabled else raw_card
                     
-                    # 记录结果
-                    result = {
-                        "file": path_display,
-                        "line": f"{line_prefix}{line_idx}",
-                        "type": card_type,
-                        "match": final_card,
-                        "context": line.strip()[:100] # 截取部分上下文
-                    }
-                    self.results.append(result)
-                    self.matches_found += 1
-                    logger.warning(f"Found {card_type}: {path_display} (Line {line_prefix}{line_idx})")
+                    # 优化：忽略 Unknown 类型的卡号
+                    if card_type != 'Unknown':
+                        final_card = self.mask_card(raw_card) if self.mask_enabled else raw_card
+                        
+                        # 记录结果
+                        result = {
+                            "file": path_display,
+                            "line": f"{line_prefix}{line_idx}",
+                            "type": card_type,
+                            "match": final_card,
+                            "context": line.strip()[:100] # 截取部分上下文
+                        }
+                        self.results.append(result)
+                        self.matches_found += 1
+                        logger.warning(f"Found {card_type}: {path_display} (Line {line_prefix}{line_idx})")
 
     def scan_chunked(self, file_path, archive_chain=None):
         """流式处理大文件或二进制文件 (如 .ibd, .log)"""
